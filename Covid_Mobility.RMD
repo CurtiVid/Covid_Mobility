@@ -1,0 +1,90 @@
+---
+title: "Covid_Mobility"
+author: "19744009 - Vidya Raibagi"
+date: "2023-04-12"
+output: html_document
+---
+
+```{r}
+require(car)
+#     title = {covdata: COVID-19 Case and Mortality Time Series},
+#     author = {Kieran Healy},
+#     year = {2020},
+#     note = {R package version 0.5.2},
+#     url = {http://kjhealy.github.io/covdata}
+library(covdata)
+#     title = {covmobility: Mobility Data from Apple and Google},
+#     author = {Kieran Healy},
+#     year = {2020},
+#     note = {R package version 0.1.0},
+#     url = {http://kjhealy.github.io/covmobility}
+library(covmobility)
+
+
+```
+
+```{r}
+data(apple_mobility)
+data(google_mobility)
+
+```
+
+#Summary Statistics
+```{r}
+library(tidyverse)
+summary(apple_mobility)
+summary(google_mobility)
+
+AppleMobility_Australia <- subset(apple_mobility,(apple_mobility$region=="Australia"))
+ggplot()+geom_line(data = AppleMobility_Australia,aes(x = date,y=score,color=as.factor(transportation_type)))+
+  ylab("Australian Mobility Data")+ggtitle("Australian Mobility Series ")
+
+
+#Select the Data related to Perth City
+AppleMobility_Perth <- subset(apple_mobility,(apple_mobility$region=="Perth"))
+
+#Data Plots for Exploratory Analysis
+ggplot()+geom_line(data = AppleMobility_Perth,aes(x = date,y=score,color=as.factor(transportation_type)))+
+  ylab("Perth Mobility Data")+ggtitle("Perth Mobility Series ")
+
+GoogleMobility_Australia <- subset(google_mobility,(google_mobility$country_region=="Australia"))
+ggplot()+geom_line(data = GoogleMobility_Australia,aes(x = date,y=pct_diff,color=as.factor(type)))+
+  ylab("Australia Google Mobility Data")+ggtitle("Australia Google Mobility Series")
+
+
+#hist(google_mobility$pct_diff, col = 'blue', probability =T)
+
+```
+
+```{r}
+library(tidyverse)
+library(forecast)
+GgleMoblty_Aust_Retail <- subset(GoogleMobility_Australia,(GoogleMobility_Australia$type=="retail"))
+ggplot()+geom_line(data = GgleMoblty_Aust_Retail,aes(x = date,y=pct_diff,colour="green"))+
+  ylab("Australia Google Mobility Data ")+ggtitle("Australia Google Mobility Series for Retail ")
+
+retail_ts <- ts(GgleMoblty_Aust_Retail[,c('pct_diff')],frequency = 7)
+
+ggplot()+geom_line(data = GgleMoblty_Aust_Retail,aes(x = date,y=retail_ts,colour="blue"))+
+  ylab("Google Retail Data")+ggtitle("Google Retail Time Series Data")
+
+retail_ts_cln <- tsclean(retail_ts)
+acf(retail_ts_cln)
+pacf(retail_ts_cln)
+
+#GgleMoblty_Aust_Retail$date <- as.Date(GgleMoblty_Aust_Retail$date,"%m/%d/$Y")%>% 
+ # mutate(Month = months(date,label=TRUE),Year = as.integer(year(date))) tb
+
+
+
+```
+```{r}
+library(readr)
+library(tidyverse)
+Covid_Data <- read_csv('WHO-COVID-19-global-data.csv',col_names = TRUE)
+Covid_US <- subset(Covid_Data,Covid_Data$Country_code=="US")
+ggplot()+geom_line(data = Covid_US,aes(x = Date_reported,y=New_cases,colour="green"))+
+  ylab("New Covid Cases ")+ggtitle("US COVID Cases ")
+
+```
+
