@@ -18,7 +18,7 @@ library(covdata)
 #     year = {2020},
 #     note = {R package version 0.1.0},
 #     url = {http://kjhealy.github.io/covmobility}
-library(covmobility)
+#library(covmobility)
 
 
 ```
@@ -78,6 +78,8 @@ pacf(retail_ts_cln)
 
 
 ```
+
+
 ```{r}
 library(readr)
 library(tidyverse)
@@ -85,6 +87,263 @@ Covid_Data <- read_csv('WHO-COVID-19-global-data.csv',col_names = TRUE)
 Covid_US <- subset(Covid_Data,Covid_Data$Country_code=="US")
 ggplot()+geom_line(data = Covid_US,aes(x = Date_reported,y=New_cases,colour="green"))+
   ylab("New Covid Cases ")+ggtitle("US COVID Cases ")
+
+
+```
+
+Above all is analysis
+Below is the code for Project
+
+
+
+```{r}
+Mobility <- subset(google_mobility,google_mobility$country_region %in% c('Belgium','Germany','Japan','Norway','United Kingdom'))
+Mobility <- subset(Mobility,(Mobility$sub_region_1 %in% c('Brussels','Berlin','California','Oslo','Tokyo','Nottingham','Greater London','Greater Manchester','Edinburgh','Glasgow City','Dundee City Council')))
+
+Mobility <- subset(Mobility,select = -sub_region_2)
+Mobility <- subset(Mobility,select = -country_region_code)
+Mobility <- subset(Mobility,select = -country_region)
+Mobility <- subset(Mobility,select = -metro_area)
+Mobility <- subset(Mobility,select = -iso3166_2)
+Mobility <- subset(Mobility,select = -census_fips_code)
+Mobility <- subset(Mobility,select = -place_id)
+Mobility$Cities <- Mobility$sub_region_1
+Mobility <- subset(Mobility,select = -sub_region_1)
+
+Mobility_Sub <- subset(google_mobility,google_mobility$country_region %in% c('Canada','United States'))
+Mobility_Sub <- subset(Mobility_Sub,(Mobility_Sub$sub_region_1 %in% c('California','Ontario','Quebec')))
+Mobility_Sub <- subset(Mobility_Sub,Mobility_Sub$sub_region_2 %in% c('Los Angeles County','San Francisco County','Toronto Division','Quebec'))
+Mobility_Sub <- subset(Mobility_Sub,select = -sub_region_1)
+Mobility_Sub <- subset(Mobility_Sub,select = -country_region)
+Mobility_Sub <- subset(Mobility_Sub,select = -metro_area)
+Mobility_Sub <- subset(Mobility_Sub,select = -iso3166_2)
+Mobility_Sub <- subset(Mobility_Sub,select = -census_fips_code)
+Mobility_Sub <- subset(Mobility_Sub,select = -place_id)
+Mobility_Sub <- subset(Mobility_Sub,select = -country_region_code)
+Mobility_Sub$Cities <- Mobility_Sub$sub_region_2
+Mobility_Sub <- subset(Mobility_Sub,select = -sub_region_2)
+
+Mobility <- rbind(Mobility,Mobility_Sub)
+
+Mobility_Temp1 <- subset(Mobility,(Mobility$type=="grocery"))
+Mobility_Temp <- Mobility_Temp1
+Mobility_Temp$Mobility_Grocery <- Mobility_Temp$pct_diff
+Mobility_Temp <- subset(Mobility_Temp,select = -pct_diff)
+Mobility_Temp <- subset(Mobility_Temp,select = -type)
+
+#To check if the grocery data is extracted correctly
+#result = Match if both are same
+#result <- ifelse(Mobility_Temp$Mobility_Grocery == Mobility_Temp1$pct_diff, "Match", "No match")
+
+Mobility_Temp1 <- subset(Mobility,(Mobility$type=="transit"))
+Mobility_Temp$Mobility_Transit <- Mobility_Temp1$pct_diff
+
+Mobility_Temp1 <- subset(Mobility,(Mobility$type=="parks"))
+Mobility_Temp$Mobility_Parks <- Mobility_Temp1$pct_diff
+
+
+```
+
+Read Covid19 daily case number data for above cities
+```{r}
+library(tidyverse)
+library(readxl)
+
+Covid_Data <- data.frame()
+
+#Read the Covid19 data for Japan
+Covid_Tokyo <- read_csv('Covid_Japan.csv')
+
+#Extract the COVID19 data for Tokyo
+Covid_Tokyo <- subset(Covid_Tokyo,Covid_Tokyo$Prefecture=='Tokyo')
+
+#The data column containing the new daily cases is only required for analysis
+#Therefore Date,City and Daily Cases are extracted and 
+#delete or remove the other columns
+Covid_Tokyo <- subset(Covid_Tokyo,select = -Tested)
+Covid_Tokyo <- subset(Covid_Tokyo,select = -Discharged)
+Covid_Tokyo <- subset(Covid_Tokyo,select = -Fatal)
+Covid_Tokyo <- subset(Covid_Tokyo,select = -Hosp_require)
+Covid_Tokyo <- subset(Covid_Tokyo,select = -Hosp_severe)
+Covid_Tokyo <- subset(Covid_Tokyo,select = -...9)
+Covid_Tokyo <- subset(Covid_Tokyo,select = -...10)
+Covid_Tokyo <- subset(Covid_Tokyo,select = -...11)
+Covid_Tokyo <- subset(Covid_Tokyo,select = -...12)
+Covid_Tokyo <- subset(Covid_Tokyo,select = -...13)
+Covid_Tokyo <- subset(Covid_Tokyo,select = -...14)
+Covid_Tokyo <- subset(Covid_Tokyo,select = -...15)
+Covid_Tokyo <- subset(Covid_Tokyo,select = -...16)
+
+Covid_Data <- Covid_Tokyo
+Covid_Data$City <- Covid_Data$Prefecture
+Covid_Data$Covid_Cases <- Covid_Data$Positive
+Covid_Data <- subset(Covid_Data,select = -Prefecture)
+Covid_Data <- subset(Covid_Data,select = -Positive)
+
+
+#Read the Covid19 data for Norway
+Covid_Oslo <- read_excel('Covid_Norway.xlsx')
+
+#Extract the Covid data for Oslo
+Covid_Oslo <- subset(Covid_Oslo,Covid_Oslo$kommune_bydel_name=='Sentrum')
+
+#The data column containing the new daily cases is only required for analysis
+#Therefore Date,City and Daily Cases are extracted and 
+#delete or remove the other columns
+Covid_Oslo <- subset(Covid_Oslo,select = -date_time)
+Covid_Oslo <- subset(Covid_Oslo,select = -kommune_bydel_no)
+Covid_Oslo <- subset(Covid_Oslo,select = -bydel_no)
+Covid_Oslo <- subset(Covid_Oslo,select = -bydel_name)
+Covid_Oslo <- subset(Covid_Oslo,select = -kommune_no)
+Covid_Oslo <- subset(Covid_Oslo,select = -fylke_no)
+Covid_Oslo <- subset(Covid_Oslo,select = -fylke_name)
+Covid_Oslo <- subset(Covid_Oslo,select = -population)
+Covid_Oslo <- subset(Covid_Oslo,select = -kommune_bydel_name)
+
+Covid_Oslo$Date <- Covid_Oslo$date
+Covid_Oslo$City <- Covid_Oslo$kommune_name
+Covid_Oslo$Covid_Cases <- Covid_Oslo$cases
+
+Covid_Oslo <- subset(Covid_Oslo,select = -date)
+Covid_Oslo <- subset(Covid_Oslo,select = -kommune_name)
+Covid_Oslo <- subset(Covid_Oslo,select = -cases)
+
+merged_df <- merge(Covid_Data, Covid_Oslo, by = "Date", all = TRUE)
+
+
+Covid_Berlin <- read_csv('Covid_Berlin.csv')
+Covid_Berlin <- subset(Covid_Berlin,select = -...1)
+Covid_Berlin <- subset(Covid_Berlin,select = -cases)
+Covid_Berlin <- subset(Covid_Berlin,select = -death)
+Covid_Berlin <- subset(Covid_Berlin,select = -rel_change_in_7_day_incidence)
+Covid_Berlin <- subset(Covid_Berlin,select = -recovered)
+#Covid_Berlin <- subset(Covid_Berlin,select = -Covid_Berlin$7_day_incidence)
+
+Covid_Brussels <- read_csv('Covid_Brussels.csv')
+Covid_Brussels <- subset(Covid_Brussels,select = -Not_consolidated)
+Covid_Brussels$Date <- as.Date(Covid_Brussels$Date, "%b %d, %Y")
+
+Covid_Toronto <- read.csv('Covid_Toronto.csv')
+Covid_Toronto$Date <- as.Date(Covid_Toronto$Date)
+Covid_Toronto <- subset(Covid_Toronto,select = -X_id)
+Covid_Toronto <- subset(Covid_Toronto,select = -Algoma_District)
+Covid_Toronto <- subset(Covid_Toronto,select = -Brant_County)
+Covid_Toronto <- subset(Covid_Toronto,select = -Chatham_Kent)
+Covid_Toronto <- subset(Covid_Toronto,select = -Durham_Region)
+Covid_Toronto <- subset(Covid_Toronto,select = -Eastern_Ontario)
+Covid_Toronto <- subset(Covid_Toronto,select = -Grey_Bruce)
+Covid_Toronto <- subset(Covid_Toronto,select = -Haldimand_Norfolk)
+Covid_Toronto <- subset(Covid_Toronto,select = -Haliburton_Kawartha_Pine_Ridge)
+Covid_Toronto <- subset(Covid_Toronto,select = -Porcupine)
+Covid_Toronto <- subset(Covid_Toronto,select = -Waterloo_Region)
+Covid_Toronto <- subset(Covid_Toronto,select = -Peterborough_County_City)
+Covid_Toronto <- subset(Covid_Toronto,select = -Peel_Region)
+Covid_Toronto <- subset(Covid_Toronto,select = -City_of_Ottawa)
+Covid_Toronto <- subset(Covid_Toronto,select = -Northwestern)
+Covid_Toronto <- subset(Covid_Toronto,select = -Simcoe_Muskoka_District)
+Covid_Toronto <- subset(Covid_Toronto,select = -North_Bay_Parry_Sound_District)
+Covid_Toronto <- subset(Covid_Toronto,select = -Niagara_Region)
+Covid_Toronto <- subset(Covid_Toronto,select = -Middlesex_London)
+Covid_Toronto <- subset(Covid_Toronto,select = -Leeds_Grenville_Lanark)
+Covid_Toronto <- subset(Covid_Toronto,select = -Lambton_County)
+Covid_Toronto <- subset(Covid_Toronto,select = -KFLA)
+Covid_Toronto <- subset(Covid_Toronto,select = -Huron_Perth)
+Covid_Toronto <- subset(Covid_Toronto,select = -Hastings_Prince_Edward)
+Covid_Toronto <- subset(Covid_Toronto,select = -City_of_Hamilton)
+Covid_Toronto <- subset(Covid_Toronto,select = -Halton_Region)
+Covid_Toronto <- subset(Covid_Toronto,select = -Renfrew_County_and_District)
+Covid_Toronto <- subset(Covid_Toronto,select = -Southwestern)
+Covid_Toronto <- subset(Covid_Toronto,select = -Sudbury_and_District)
+Covid_Toronto <- subset(Covid_Toronto,select = -Timiskaming)
+Covid_Toronto <- subset(Covid_Toronto,select = -Thunder_Bay_District)
+Covid_Toronto <- subset(Covid_Toronto,select = -Wellington_Dufferin_Guelph)
+Covid_Toronto <- subset(Covid_Toronto,select = -Windsor_Essex_County)
+Covid_Toronto <- subset(Covid_Toronto,select = -York_Region)
+Covid_Toronto <- subset(Covid_Toronto,select = -Total)
+
+
+Covid_Nottingham <- read.csv('Covid_Nottingham.csv')
+Covid_Nottingham <- subset(Covid_Nottingham,select = -areaType)
+Covid_Nottingham <- subset(Covid_Nottingham,select = -areaCode)
+Covid_Nottingham <- subset(Covid_Nottingham,select = -cumCasesBySpecimenDate)
+Covid_Nottingham <- subset(Covid_Nottingham,select = -newFirstEpisodesBySpecimenDate)
+Covid_Nottingham <- subset(Covid_Nottingham,select = -cumFirstEpisodesBySpecimenDate)
+Covid_Nottingham <- subset(Covid_Nottingham,select = -newReinfectionsBySpecimenDate)
+Covid_Nottingham <- subset(Covid_Nottingham,select = -cumReinfectionsBySpecimenDate)
+
+Covid_Dundee <- read.csv('Covid_Dundee.csv')
+Covid_Dundee <- subset(Covid_Dundee,select = -areaType)
+Covid_Dundee <- subset(Covid_Dundee,select = -areaCode)
+Covid_Dundee <- subset(Covid_Dundee,select = -cumCasesBySpecimenDate)
+Covid_Dundee <- subset(Covid_Dundee,select = -newFirstEpisodesBySpecimenDate)
+Covid_Dundee <- subset(Covid_Dundee,select = -cumFirstEpisodesBySpecimenDate)
+Covid_Dundee <- subset(Covid_Dundee,select = -newReinfectionsBySpecimenDate)
+Covid_Dundee <- subset(Covid_Dundee,select = -cumReinfectionsBySpecimenDate)
+
+Covid_Edinburgh <- read.csv('Covid_Edinburgh.csv')
+Covid_Edinburgh <- subset(Covid_Edinburgh,select = -areaType)
+Covid_Edinburgh <- subset(Covid_Edinburgh,select = -areaCode)
+Covid_Edinburgh <- subset(Covid_Edinburgh,select = -cumCasesBySpecimenDate)
+Covid_Edinburgh <- subset(Covid_Edinburgh,select = -newFirstEpisodesBySpecimenDate)
+Covid_Edinburgh <- subset(Covid_Edinburgh,select = -cumFirstEpisodesBySpecimenDate)
+Covid_Edinburgh <- subset(Covid_Edinburgh,select = -newReinfectionsBySpecimenDate)
+Covid_Edinburgh <- subset(Covid_Edinburgh,select = -cumReinfectionsBySpecimenDate)
+
+Covid_Glasgow <- read.csv('Covid_Glasgow.csv')
+Covid_Glasgow <- subset(Covid_Glasgow,select = -areaType)
+Covid_Glasgow <- subset(Covid_Glasgow,select = -areaCode)
+Covid_Glasgow <- subset(Covid_Glasgow,select = -cumCasesBySpecimenDate)
+Covid_Glasgow <- subset(Covid_Glasgow,select = -newFirstEpisodesBySpecimenDate)
+Covid_Glasgow <- subset(Covid_Glasgow,select = -cumFirstEpisodesBySpecimenDate)
+Covid_Glasgow <- subset(Covid_Glasgow,select = -newReinfectionsBySpecimenDate)
+Covid_Glasgow <- subset(Covid_Glasgow,select = -cumReinfectionsBySpecimenDate)
+
+Covid_Manchester <- read.csv('Covid_Manchester.csv')
+Covid_Manchester <- subset(Covid_Manchester,select = -areaType)
+Covid_Manchester <- subset(Covid_Manchester,select = -areaCode)
+Covid_Manchester <- subset(Covid_Manchester,select = -cumCasesBySpecimenDate)
+Covid_Manchester <- subset(Covid_Manchester,select = -newFirstEpisodesBySpecimenDate)
+Covid_Manchester <- subset(Covid_Manchester,select = -cumFirstEpisodesBySpecimenDate)
+Covid_Manchester <- subset(Covid_Manchester,select = -newReinfectionsBySpecimenDate)
+Covid_Manchester <- subset(Covid_Manchester,select = -cumReinfectionsBySpecimenDate)
+
+Covid_London <- read.csv('Covid_London.csv')
+Covid_London <- subset(Covid_London,select = -areaType)
+Covid_London <- subset(Covid_London,select = -areaCode)
+Covid_London <- subset(Covid_London,select = -cumCasesBySpecimenDate)
+Covid_London <- subset(Covid_London,select = -newFirstEpisodesBySpecimenDate)
+Covid_London <- subset(Covid_London,select = -cumFirstEpisodesBySpecimenDate)
+Covid_London <- subset(Covid_London,select = -newReinfectionsBySpecimenDate)
+Covid_London <- subset(Covid_London,select = -cumReinfectionsBySpecimenDate)
+
+Covid_LosAngeles <- read.csv('Covid_LosAngeles.csv')
+Covid_LosAngeles <- subset(Covid_LosAngeles,select = -X)
+Covid_LosAngeles <- subset(Covid_LosAngeles,select = -total_cases)
+Covid_LosAngeles <- subset(Covid_LosAngeles,select = -avg_cases)
+Covid_LosAngeles <- subset(Covid_LosAngeles,select = -total_deaths)
+Covid_LosAngeles <- subset(Covid_LosAngeles,select = -new_deaths)
+Covid_LosAngeles <- subset(Covid_LosAngeles,select = -avg_deaths)
+
+
+Covid_SanFrancisco <- read_csv('Covid_SanFrancisco.csv')
+
+Covid_SanFrancisco$Date <- as.Date(Covid_SanFrancisco$specimen_collection_date, format = "%m/%d/%Y %I:%M:%S %p")
+Covid_SanFrancisco$Date <- format(Covid_SanFrancisco$Date,"%Y-%m-%d")
+Covid_SanFrancisco <- subset(Covid_SanFrancisco,select = -cumulative_cases)
+Covid_SanFrancisco <- subset(Covid_SanFrancisco,select = -data_as_of)
+Covid_SanFrancisco <- subset(Covid_SanFrancisco,select = -data_loaded_at)
+```
+
+```{r}
+Temperature <- read.csv('Temperature_Cities.csv')
+```
+
+Create a panel data containing mobility,covid and temperature data
+
+```{r}
+Mob_Tpr <- merge(M)
+Mob_Cov_Tpr <- data.frame(Date = Mobility$date,
+                          Location = Cities)
 
 ```
 
